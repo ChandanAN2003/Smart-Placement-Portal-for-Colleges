@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TPO Dashboard - Placement Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-danger">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#"><i class="bi bi-shield-check"></i> TPO Dashboard</a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text me-3">Welcome, {{ session.name }}</span>
+                <a class="btn btn-outline-light btn-sm" href="{{ url_for('logout') }}">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Statistics -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-white bg-primary">
+                    <div class="card-body">
+                        <h6 class="card-title"><i class="bi bi-people"></i> Total Students</h6>
+                        <h2>{{ total_students }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-info">
+                    <div class="card-body">
+                        <h6 class="card-title"><i class="bi bi-building"></i> Total Drives</h6>
+                        <h2>{{ total_drives }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-success">
+                    <div class="card-body">
+                        <h6 class="card-title"><i class="bi bi-check-circle"></i> Active Drives</h6>
+                        <h2>{{ active_drives }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-warning">
+                    <div class="card-body">
+                        <h6 class="card-title"><i class="bi bi-trophy"></i> Selected</h6>
+                        <h2>{{ selected_count }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Create Drive -->
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-plus-circle"></i> Create Placement Drive</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('create_drive') }}">
+                            <div class="mb-3">
+                                <label class="form-label">Company Name</label>
+                                <input type="text" class="form-control" name="company_name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Job Role</label>
+                                <input type="text" class="form-control" name="job_role" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Job Description</label>
+                                <textarea class="form-control" name="job_description" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Eligibility</label>
+                                <input type="text" class="form-control" name="eligibility" placeholder="e.g., CGPA >= 7.5">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Last Date</label>
+                                <input type="date" class="form-control" name="last_date" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-check"></i> Create Drive
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Applications Management -->
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="bi bi-list-check"></i> Applications Management</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if applications %}
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Student</th>
+                                            <th>Company</th>
+                                            <th>Role</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for app in applications %}
+                                        <tr>
+                                            <td>
+                                                <small>{{ app.student_name }}</small><br>
+                                                <small class="text-muted">{{ app.email }}</small>
+                                            </td>
+                                            <td>{{ app.company_name }}</td>
+                                            <td>{{ app.job_role }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ 
+                                                    'success' if app.status == 'Selected' else 
+                                                    'info' if app.status == 'Shortlisted' else 
+                                                    'warning' if app.status == 'Applied' else 
+                                                    'danger' 
+                                                }}">
+                                                    {{ app.status }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#statusModal{{ app.id }}">
+                                                        <i class="bi bi-pencil"></i> Update
+                                                    </button>
+                                                    {% if app.status == 'Selected' %}
+                                                    <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#offerModal{{ app.id }}">
+                                                        <i class="bi bi-file-earmark-pdf"></i> Offer
+                                                    </button>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+
+                                        <!-- Status Update Modal -->
+                                        <div class="modal fade" id="statusModal{{ app.id }}" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Update Application Status</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <form method="POST" action="{{ url_for('update_application_status', app_id=app.id) }}">
+                                                        <div class="modal-body">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Status</label>
+                                                                <select class="form-select" name="status" required>
+                                                                    <option value="Applied" {{ 'selected' if app.status == 'Applied' }}>Applied</option>
+                                                                    <option value="Shortlisted" {{ 'selected' if app.status == 'Shortlisted' }}>Shortlisted</option>
+                                                                    <option value="Selected" {{ 'selected' if app.status == 'Selected' }}>Selected</option>
+                                                                    <option value="Rejected" {{ 'selected' if app.status == 'Rejected' }}>Rejected</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                            <button type="submit" class="btn btn-primary">Update Status</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Offer Letter Upload Modal -->
+                                        <div class="modal fade" id="offerModal{{ app.id }}" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Upload Offer Letter</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <form method="POST" action="{{ url_for('upload_offer_letter', app_id=app.id) }}" enctype="multipart/form-data">
+                                                        <div class="modal-body">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Offer Letter (PDF/DOCX)</label>
+                                                                <input type="file" class="form-control" name="offer_letter" accept=".pdf,.docx,.doc" required>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                            <button type="submit" class="btn btn-success">Upload & Send</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted text-center">No applications yet</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Recent Drives -->
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="bi bi-building"></i> Recent Drives</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if drives %}
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Company</th>
+                                            <th>Role</th>
+                                            <th>Last Date</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for drive in drives %}
+                                        <tr>
+                                            <td>{{ drive.company_name }}</td>
+                                            <td>{{ drive.job_role }}</td>
+                                            <td>{{ drive.last_date }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ 'success' if drive.status == 'active' else 'secondary' }}">
+                                                    {{ drive.status }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted text-center">No drives created yet</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Report -->
+        <div class="card mt-4">
+            <div class="card-body text-center">
+                <a href="{{ url_for('export_tpo_report') }}" class="btn btn-primary btn-lg">
+                    <i class="bi bi-download"></i> Export Complete Report (Excel)
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

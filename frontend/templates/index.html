@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College Placement Portal - Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-light">
+    <div class="container">
+        <div class="row justify-content-center align-items-center min-vh-100">
+            <div class="col-md-6 col-lg-5">
+                <div class="card shadow-lg border-0">
+                    <div class="card-body p-5">
+                        <div class="text-center mb-4">
+                            <h2 class="text-primary fw-bold">🎓 Placement Portal</h2>
+                            <p class="text-muted">AI-Integrated College Placement Management</p>
+                        </div>
+
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        <!-- Login Form -->
+                        <div id="loginForm">
+                            <h4 class="mb-4">Login</h4>
+                            <form method="POST" action="{{ url_for('login') }}">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">Password</label>
+                                    <input type="password" class="form-control" id="password" name="password" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100 mb-3">Login</button>
+                                <p class="text-center">
+                                    <a href="#" onclick="showRegister(); return false;" class="text-decoration-none">Don't have an account? Register</a>
+                                </p>
+                            </form>
+                        </div>
+
+                        <!-- Register Form -->
+                        <div id="registerForm" style="display: none;">
+                            <h4 class="mb-4">Register</h4>
+                            <form method="POST" action="{{ url_for('register') }}">
+                                <div class="mb-3">
+                                    <label for="reg_name" class="form-label">Full Name</label>
+                                    <input type="text" class="form-control" id="reg_name" name="name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="reg_email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="reg_email" name="email" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="reg_password" class="form-label">Password</label>
+                                    <input type="password" class="form-control" id="reg_password" name="password" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="reg_role" class="form-label">Role</label>
+                                    <select class="form-select" id="reg_role" name="role" required onchange="toggleDepartment()">
+                                        <option value="">Select Role</option>
+                                        <option value="student">Student</option>
+                                        <option value="hod">Head of Department (HOD)</option>
+                                        <option value="tpo">Training & Placement Officer (TPO)</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="departmentField" style="display: none;">
+                                    <label for="reg_department" class="form-label">Department</label>
+                                    <input type="text" class="form-control" id="reg_department" name="department" placeholder="e.g., Computer Science">
+                                </div>
+                                <button type="submit" class="btn btn-success w-100 mb-3">Register</button>
+                                <p class="text-center">
+                                    <a href="#" onclick="showLogin(); return false;" class="text-decoration-none">Already have an account? Login</a>
+                                </p>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <small class="text-muted">Default Credentials:<br>
+                    TPO: tpo@college.edu / admin123<br>
+                    HOD: hod.cs@college.edu / hod123<br>
+                    Student: alice@college.edu / student123</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        //{% if show_register %}
+        //showRegister();
+        //{% endif %}
+
+        function showRegister() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+        }
+
+        function showLogin() {
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('loginForm').style.display = 'block';
+        }
+
+        function toggleDepartment() {
+            const role = document.getElementById('reg_role').value;
+            const deptField = document.getElementById('departmentField');
+            if (role === 'student' || role === 'hod') {
+                deptField.style.display = 'block';
+                document.getElementById('reg_department').required = true;
+            } else {
+                deptField.style.display = 'none';
+                document.getElementById('reg_department').required = false;
+            }
+        }
+    </script>
+</body>
+</html>
+

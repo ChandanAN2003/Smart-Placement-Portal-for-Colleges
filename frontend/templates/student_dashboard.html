@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Placement Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#"><i class="bi bi-briefcase"></i> Placement Portal</a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text me-3">Welcome, {{ session.name }}</span>
+                <a class="btn btn-outline-light btn-sm" href="{{ url_for('logout') }}">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-person-circle"></i> Profile</h5>
+                        <p class="mb-1"><strong>Name:</strong> {{ student.name }}</p>
+                        <p class="mb-1"><strong>Email:</strong> {{ student.email }}</p>
+                        <p class="mb-1"><strong>Department:</strong> {{ student.department or 'N/A' }}</p>
+                        <p class="mb-0"><strong>Status:</strong> 
+                            <span class="badge bg-{{ 'success' if student.is_approved else 'warning' }}">
+                                {{ 'Approved' if student.is_approved else 'Pending' }}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Resume Upload -->
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-file-earmark-pdf"></i> Resume</h5>
+                        {% if resume %}
+                            <p class="text-success"><i class="bi bi-check-circle"></i> Resume Uploaded</p>
+                            <p class="small">Job Fit Score: <strong>{{ resume.job_fit_score }}%</strong></p>
+                        {% else %}
+                            <p class="text-muted">No resume uploaded</p>
+                        {% endif %}
+                        <form method="POST" action="{{ url_for('upload_resume') }}" enctype="multipart/form-data">
+                            <input type="file" class="form-control form-control-sm mb-2" name="resume" accept=".pdf,.docx,.doc" required>
+                            <button type="submit" class="btn btn-primary btn-sm w-100">
+                                <i class="bi bi-upload"></i> Upload Resume
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Notifications -->
+                {% if notifications %}
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-bell"></i> Notifications</h5>
+                        <div class="list-group list-group-flush">
+                            {% for notif in notifications %}
+                            <div class="list-group-item">
+                                <small class="text-muted">{{ notif.message }}</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9">
+                <!-- Active Drives -->
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="bi bi-building"></i> Active Placement Drives</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if drives %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Company</th>
+                                            <th>Job Role</th>
+                                            <th>Eligibility</th>
+                                            <th>Last Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for drive in drives %}
+                                        <tr>
+                                            <td><strong>{{ drive.company_name }}</strong></td>
+                                            <td>{{ drive.job_role }}</td>
+                                            <td><small>{{ drive.eligibility or 'N/A' }}</small></td>
+                                            <td>{{ drive.last_date }}</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary" onclick="applyDrive({{ drive.id }})">
+                                                    <i class="bi bi-send"></i> Apply
+                                                </button>
+                                                <button class="btn btn-sm btn-info" onclick="analyzeResume({{ drive.id }})">
+                                                    <i class="bi bi-robot"></i> AI Analysis
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted text-center">No active drives available</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- My Applications -->
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="bi bi-list-check"></i> My Applications</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if applications %}
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Company</th>
+                                            <th>Job Role</th>
+                                            <th>Applied Date</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for app in applications %}
+                                        <tr>
+                                            <td>{{ app.company_name }}</td>
+                                            <td>{{ app.job_role }}</td>
+                                            <td>{{ app.applied_at.strftime('%Y-%m-%d') if app.applied_at else 'N/A' }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ 
+                                                    'success' if app.status == 'Selected' else 
+                                                    'info' if app.status == 'Shortlisted' else 
+                                                    'warning' if app.status == 'Applied' else 
+                                                    'danger' 
+                                                }}">
+                                                    {{ app.status }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted text-center">No applications yet</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Analysis Modal -->
+    <div class="modal fade" id="analysisModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">AI Resume Analysis</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="analysisContent">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function applyDrive(driveId) {
+            if (confirm('Are you sure you want to apply for this drive?')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/student/apply/${driveId}`;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        function analyzeResume(driveId) {
+            const modal = new bootstrap.Modal(document.getElementById('analysisModal'));
+            modal.show();
+            
+            fetch(`/student/resume_analysis/${driveId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const content = document.getElementById('analysisContent');
+                    content.innerHTML = `
+                        <div class="mb-3">
+                            <h6>Job Fit Score: <span class="badge bg-primary">${data.job_fit_score || 0}%</span></h6>
+                        </div>
+                        <div class="mb-3">
+                            <h6>Skills:</h6>
+                            <p>${Array.isArray(data.skills) ? data.skills.join(', ') : data.skills || 'N/A'}</p>
+                        </div>
+                        <div class="mb-3">
+                            <h6>Education:</h6>
+                            <p>${data.education || 'N/A'}</p>
+                        </div>
+                        <div class="mb-3">
+                            <h6>Experience:</h6>
+                            <p>${data.experience || 'N/A'}</p>
+                        </div>
+                        <div class="mb-3">
+                            <h6>Suggestions:</h6>
+                            <p>${data.suggestions || 'No suggestions available'}</p>
+                        </div>
+                    `;
+                })
+                .catch(error => {
+                    document.getElementById('analysisContent').innerHTML = 
+                        '<div class="alert alert-danger">Error loading analysis. Please try again.</div>';
+                });
+        }
+    </script>
+</body>
+</html>
+
