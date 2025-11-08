@@ -33,7 +33,7 @@ class Database:
         """Establish database connection"""
         try:
             print("--------------------------------------------------")
-            print(f"🌍 Connecting to database...")
+            print("🌍 Connecting to database...")
             print(f"Host: {self.host}")
             print(f"Port: {self.port}")
             print(f"User: {self.user}")
